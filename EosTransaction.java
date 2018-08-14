@@ -273,14 +273,23 @@ public class EosTransaction {
     }
 
     public String pack() {
-        ByteBuffer buf = ByteBuffer.allocate(8192);
-        pack(buf);
+        StringBuilder result = new StringBuilder();
+        int size = 8192; // packed_trx will not exceed 1K without signature
+        ByteBuffer buf;
+        while (true) {
+            buf = ByteBuffer.allocate(size);
+            try {
+                pack(buf);
+                break;
+            } catch (BufferOverflowException ex) {
+                size *= 2;
+            }
+        }
         buf.flip();
         int len = buf.limit();
-        StringBuilder result = new StringBuilder();
-        for (int i=0; i<len; i++) {
+        for (int i = 0; i < len; i++) {
             int x = buf.get() & 0xFF;
-            result.append(HEX[x/16]).append(HEX[x%16]);
+            result.append(HEX[x / 16]).append(HEX[x % 16]);
         }
         return result.toString();
     }
